@@ -21,7 +21,7 @@ ZENDESK_API_TOKEN=your-api-token
 
 
 ### 3. Get Your Zendesk API Token
-1. Go to your Zendesk Admin Center
+1. Go to your Zendesk Admin Centre
 2. Navigate to Apps and integrations > Zendesk API
 3. Enable token access and generate a new API token
 4. Copy the token to your `.env` file
@@ -94,7 +94,9 @@ zendesk-mcp-server/
 |    -__init_.py
 |    -create_ticket_tool.py      # Create ticket tool
 |    -update_ticket_tool.py      # Update ticket tool
+|    -get_ticket.py              # get the ticket tool
 ├── requirements.txt           # Dependencies
 ├── .env                       # Environment variables
 └── README.md                 # This file
 ```
+
