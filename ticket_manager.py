@@ -1,15 +1,18 @@
-"""Ticket Manager: Handles create and update logic for Zendesk tickets."""
+"""Ticket Manager: Handles create, update, and fetch logic for Zendesk tickets."""
 
 from ticket_validator import TicketValidator
-from utils.client import post, put
+from utils.client import post, put, get_all
 
 
 class TicketManager:
     """
-    Manages ticket operations with validation and API calls.
+    Manages Zendesk ticket operations including create, update, and fetch.
     """
 
     def __init__(self):
+        """
+        Initialize the TicketManager with a TicketValidator instance.
+        """
         self.validator = TicketValidator()
 
     def create_ticket(
@@ -17,20 +20,28 @@ class TicketManager:
     ) -> dict:
         """
         Create a new ticket in Zendesk.
+
+        Args:
+            employee_id (str): Requester's ID.
+            subject (str): Ticket subject.
+            description (str): Ticket description.
+            priority (str, optional): Ticket priority (default "normal").
+
+        Returns:
+            dict: Contains success status, message, and ticket data if successful,
+                  otherwise error details.
         """
-        is_valid, errors = self.validator.validate_create(
-            subject, description, priority
-        )
+        is_valid, errors = self.validator.validate_create(subject, description, priority)
         if not is_valid:
             return {
-                "success": False,
-                "error": "Validation failed for create_ticket",
-                "details": errors,
-            }
+                "success": False, 
+                "error": "Validation failed for create_ticket", 
+                "details": errors
+                }
 
         payload = {
             "ticket": {
-                "requester": {"ID": employee_id},
+                "requester": {"email": employee_id},
                 "subject": subject,
                 "comment": {"body": description},
                 "priority": priority.lower(),
@@ -38,7 +49,6 @@ class TicketManager:
         }
 
         response = post("/api/v2/tickets.json", payload)
-
         if response.get("ticket"):
             return {
                 "success": True,
@@ -52,33 +62,37 @@ class TicketManager:
             }
         else:
             return {
-                "success": False,
-                "error": "Failed to create ticket",
-                "details": [str(response)],
-            }
+                "success": False, 
+                "error": "Failed to create ticket", 
+                "details": [str(response)]
+                }
 
     def update_ticket(self, ticket_id: int, status: str, comment: str = "") -> dict:
         """
-        Update an existing ticket in Zendesk.
+        Update an existing Zendesk ticket's status and optional comment.
+
+        Args:
+            ticket_id (int): ID of the ticket to update.
+            status (str): New status for the ticket.
+            comment (str, optional): Optional comment to add.
+
+        Returns:
+            dict: Contains success status, message, and updated ticket data if successful,
+                  otherwise error details.
         """
         is_valid, errors = self.validator.validate_update(ticket_id, status, comment)
         if not is_valid:
             return {
-                "success": False,
-                "error": "Validation failed for update_ticket",
-                "details": errors,
-            }
+                "success": False, 
+                "error": "Validation failed for update_ticket", 
+                "details": errors
+                }
 
-        payload = {
-            "ticket": {
-                "status": status.lower(),
-            }
-        }
+        payload = {"ticket": {"status": status.lower()}}
         if comment:
             payload["ticket"]["comment"] = {"body": comment}
 
         response = put(f"/api/v2/tickets/{ticket_id}.json", payload)
-
         if response.get("ticket"):
             return {
                 "success": True,
@@ -92,7 +106,17 @@ class TicketManager:
             }
         else:
             return {
-                "success": False,
-                "error": "Failed to update ticket",
-                "details": [str(response)],
-            }
+                "success": False, 
+                "error": "Failed to update ticket", 
+                "details": [str(response)]
+                }
+
+    def get_ticket(self) -> dict:
+        """
+        Fetch all tickets from Zendesk using the paginated client helper.
+
+        Returns:
+            dict: Contains 'success' and 'data' keys.
+                  'data' is a list of ticket dicts with id, subject, status, and priority.
+        """
+        return get_all("/api/v2/tickets.json")
